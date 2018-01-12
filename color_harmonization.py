@@ -27,15 +27,15 @@ H_cycle = util.H_cycle
 
 class HueSector:
 
-    def __init__(self, centor, width):
+    def __init__(self, center, width):
         # In Degree [0,180)
-        self.centor = centor
+        self.center = center
         self.width  = width
-        self.border = [(self.centor - self.width/2), (self.centor + self.width/2)]
+        self.border = [(self.center - self.width/2), (self.center + self.width/2)]
 
     def is_in_sector(self, H):
         # True/False matrix if hue resides in the sector
-        return deg_distance(H, self.centor) < self.width/2
+        return deg_distance(H, self.center) < self.width/2
 
     def distance_to_border(self, H):        
         H_1 = deg_distance(H, self.border[0])
@@ -44,8 +44,8 @@ class HueSector:
         H_distance[self.is_in_sector(H)] = 0
         return H_distance
 
-    def distance_to_centor(self, H):
-        H_distance = deg_distance(H, self.centor)
+    def distance_to_center(self, H):
+        H_distance = deg_distance(H, self.center)
         H_distance[self.is_in_sector(H)] = 0
         return H_distance
 
@@ -56,9 +56,9 @@ class HarmonicScheme:
         self.alpha = alpha
         self.sectors = []
         for t in HueTemplates[m]:
-            centor = t[0] * H_cycle + alpha
+            center = t[0] * H_cycle + alpha
             width  = t[1] * H_cycle
-            sector = HueSector(centor, width)
+            sector = HueSector(center, width)
             self.sectors.append( sector )
 
     def harmony_score(self, X):
@@ -75,7 +75,10 @@ class HarmonicScheme:
         H_dis = H_dis.min(axis=0)
         return H_dis
 
-    def hue_shifted(self, H):
+    def hue_shifted(self, X):
+        Y = X.copy()
+        H = X[:, :, 0].astype(np.int32)
+        
         H_d2b = [ sector.distance_to_border(H) for sector in self.sectors ]
         H_d2b = np.asarray(H_d2b)
         
@@ -86,25 +89,30 @@ class HarmonicScheme:
         H_wid = np.zeros((H.shape))
         H_d2c = np.zeros((H.shape))
         for i in range(len(self.sectors)):
-            s = self.sectors[i]
+            sector = self.sectors[i]
             mask = (H_cls == i)
-            H_cen[H_sec == i] = s.c
-            H_wid[H_sec == i] = s.w
+            H_ctr[mask] = sector.center
+            H_wid[mask] = sector.width
+            print(sector.center, sector.width)
+            #print(sector.distance_to_center(H))
+            cv2.imwrite(str(i)+"tmp.jpg", sector.distance_to_center(H))
+            cv2.imwrite(str(i)+"mask.jpg", mask.astype(np.int32)*255)
+            #print(mask)
+            H_d2c = sector.distance_to_center(H) * mask
+            cv2.imwrite(str(i)+"d2c.jpg", H_d2c)
+            
+        #print(H_d2c)
+        H_sgm = H_wid / 2
 
-            for y in range(H_sec.shape[0]):
-                for x in range(H_sec.shape[1]):
-                    #print(H_sec[y,x])
-                    if H_sec[y,x] == i:
-                        H_d2c[y,x] = s.centor_distance(H[y,x])
-        H_sig = H_wid / 2
-
-        H_gau = gaussian(H_d2c, 0, H_sig)
+        H_gau = util.gaussian(H_d2c, 0, H_sgm)
+        #print(H_gau)
         #print(H_d2c)
         #print(H_sig)
         #print(H_gau.dtype)
-        H_shi = H_cen + np.multiply(H_wid / 2, 1 - H_gau)
-        H_shi = np.remainder(H_shi, H_cycle)
-        return H_shi
+        H_shf = H_ctr + np.multiply(H_wid / 2, 1 - H_gau)
+        H_shf = np.remainder(H_shf, H_cycle)
+        Y[:,:,0] = H_shf
+        return Y
 
 def B(X):    
     F_matrix = np.zeros((M, A))

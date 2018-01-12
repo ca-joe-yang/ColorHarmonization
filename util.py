@@ -59,11 +59,11 @@ def draw_hue_histogram(X):
 def draw_harmonic_scheme(harmonic_scheme, canvas):
     overlay = canvas.copy()
     for sector in harmonic_scheme.sectors:
-        centor = sector.centor
+        center = sector.center
         width  = sector.width
-        #print(centor, width)
-        start  = (centor + width/2) * (360/H_cycle)
-        end    = (centor - width/2) * (360/H_cycle)
-        #print(centor, width, start, end)
+        #print(center, width)
+        start  = (center + width/2) * (360/H_cycle)
+        end    = (center - width/2) * (360/H_cycle)
+        #print(center, width, start, end)
         cv2.ellipse(overlay, (yc, xc), (circle_r,circle_r), 0, start, end, (0,0,0), -1)
     return overlay
