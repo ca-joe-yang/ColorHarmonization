@@ -67,3 +67,25 @@ def draw_harmonic_scheme(harmonic_scheme, canvas):
         #print(center, width, start, end)
         cv2.ellipse(overlay, (yc, xc), (circle_r,circle_r), 0, start, end, (0,0,0), -1)
     return overlay
+
+def length(v):
+    return math.sqrt(v[0]**2+v[1]**2)
+
+def dot_product(v,w):
+   return v[0]*w[0]+v[1]*w[1]
+
+def determinant(v,w):
+   return v[0]*w[1]-v[1]*w[0]
+
+def inner_angle(v,w):
+   cosx=dot_product(v,w)/(length(v)*length(w))
+   rad=math.acos(cosx) # in radians
+   return rad*180/math.pi # returns degrees
+   
+def angle_clockwise(A, B):
+    inner=inner_angle(A,B)
+    det = determinant(A,B)
+    if det<0: #this is a property of the det. If the det < 0 then B is clockwise of A
+        return inner
+    else: # if the det > 0 then A is immediately clockwise of B
+        return 360-inner
