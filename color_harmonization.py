@@ -23,6 +23,7 @@ M = len(template_types)
 A = 180
 
 deg_distance = util.deg_distance
+H_cycle = util.H_cycle
 
 class HueSector:
 
@@ -74,23 +75,22 @@ class HarmonicScheme:
         H_dis = H_dis.min(axis=0)
         return H_dis
 
-    '''
     def hue_shifted(self, H):
-        H_dis = []
-        for s in self.sectors:
-            H_dis.append(s.hue_distance(H))
-        H_dis = np.asarray(H_dis)
+        H_d2b = [ sector.distance_to_border(H) for sector in self.sectors ]
+        H_d2b = np.asarray(H_d2b)
         
-        H_sec = np.argmin(H_dis, axis=0)
-        H_dis = H_dis.min(axis=0)
+        H_cls = np.argmin(H_d2b, axis=0)
+        H_d2b = H_d2b.min(axis=0)
 
-        H_cen = np.zeros((H.shape))
+        H_ctr = np.zeros((H.shape))
         H_wid = np.zeros((H.shape))
         H_d2c = np.zeros((H.shape))
         for i in range(len(self.sectors)):
             s = self.sectors[i]
+            mask = (H_cls == i)
             H_cen[H_sec == i] = s.c
             H_wid[H_sec == i] = s.w
+
             for y in range(H_sec.shape[0]):
                 for x in range(H_sec.shape[1]):
                     #print(H_sec[y,x])
@@ -105,7 +105,6 @@ class HarmonicScheme:
         H_shi = H_cen + np.multiply(H_wid / 2, 1 - H_gau)
         H_shi = np.remainder(H_shi, H_cycle)
         return H_shi
-    '''
 
 def B(X):    
     F_matrix = np.zeros((M, A))
