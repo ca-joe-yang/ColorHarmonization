@@ -25,7 +25,7 @@ print("Template Type  : ", best_harmomic_scheme.m)
 print("Template Alpha : ", best_harmomic_scheme.alpha)
 
 overlay = util.draw_harmonic_scheme(best_harmomic_scheme, canvas)
-cv2.addWeighted(overlay, 0.5, canvas, 1 - 0.5, 0, canvas);
+cv2.addWeighted(overlay, 0.5, canvas, 1 - 0.5, 0, canvas)
 cv2.imwrite("hue_source.jpg", canvas)
 
 '''
