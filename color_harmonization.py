@@ -3,6 +3,7 @@
 import cv2
 import sys
 import numpy as np
+from scipy.optimize import minimize, rosen, rosen_der
 
 import util
 import importlib
@@ -69,9 +70,12 @@ class HarmonicScheme:
     def __init__(self, m, alpha):
         self.m = m
         self.alpha = alpha
+        self.reset_sectors()
+
+    def reset_sectors(self):
         self.sectors = []
-        for t in HueTemplates[m]:
-            center = t[0] * 360 + alpha
+        for t in HueTemplates[self.m]:
+            center = t[0] * 360 + self.alpha
             width  = t[1] * 360
             sector = HueSector(center, width)
             self.sectors.append( sector )
@@ -137,6 +141,57 @@ class HarmonicScheme:
         H_new = (H_new/2).astype(np.uint8)
         Y[:,:,0] = H_new
         return Y
+
+    def optimize_ETm(self, H):
+        from cvxopt import matrix, solvers
+        V = np.zeros(H.shape).reshape(-1)
+        res = minimize(fun, (2, 0), method='SLSQP', bounds=bnds, constraints=cons)
+
+    def energy_E(self, X, V, p):
+        w1 = 1.0
+        w2 = 1.0
+        return w1 * self.energy_E1(X, V, p) + w2 * self.energy_E2(X, V, p)
+
+    def energy_E1(self, X, V, P):
+        # Opencv store H as [0, 180) --> [0, 360)
+        H = X[:, :, 0].astype(np.int32)* 2
+        # Opencv store S as [0, 255] --> [0, 1]
+        S = X[:, :, 1].astype(np.float32) / 255.0
+        
+        H_P = H[ P[0], P[1] ]
+        V_P = V[ P[0], P[1] ]
+        S_P = S[ P[0], P[1] ]
+
+        d = util.deg_distance(H_P, V_P)
+        s = S_P
+        
+        e1 = np.multiply(d, s)
+        e1 = np.sum(e1)
+        return e1
+
+    def energy_E2(self, X, V, P):
+        # Opencv store H as [0, 180) --> [0, 360)
+        H = X[:, :, 0].astype(np.int32)* 2
+        # Opencv store S as [0, 255] --> [0, 1]
+        S = X[:, :, 1].astype(np.float32) / 255.0
+
+        P_set, Q_set = PQ_N4(X, P)
+
+        V_P = V[ P_set[0], P_set[1] ]
+        V_Q = V[ Q_set[0], Q_set[1] ]
+        S_P = S[ P_set[0], P_set[1] ]
+        S_Q = S[ Q_set[0], Q_set[1] ]
+        H_P = H[ P_set[0], P_set[1] ]
+        H_Q = H[ Q_set[0], Q_set[1] ]
+        
+        delta = util.delta( V_p, V_q )
+        s_max = np.max((S_P, S_Q), axis=0)
+        d = util.deg_distance(H_P, H_Q)
+        
+        e2 = np.multiply( np.multiply( delta, s_max ), np.reciprocal(d) )
+        e2 = np.sum(e2)
+        return e2
+
 
 def B(X):
     F_matrix = np.zeros((M, A))

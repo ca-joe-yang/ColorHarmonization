@@ -11,6 +11,41 @@ xc = int(canvas_w/2)
 circle_r = 250
 H_cycle = 180
 
+dxdy_N4 = [(0,-1), (-1,0), (0,1), (1,0)]
+dxdy_N8 = [(0,-1), (-1,-1), (-1,0), (-1,1), (0,1), (1,1), (1,0), (1,-1)]
+
+def delta(P, Q):
+    return (P != Q).astype(int)
+
+def PQ_N4(I, P):
+    Px, Py, Qx, Qy = [], [], [], []
+    for p in P:
+        px, py = p
+        for dx, dy in dxdy_N4:
+            qx, qy = px+dx, py+dy
+            if qy < 0 or qy >= I.shape[0] or qx < 0 or qx >= I.shape[1]:
+                continue
+            Px.append(px)
+            Py.append(py)
+            Qx.append(qx)
+            Qy.append(qy)
+    return [Px, Py], [Qx, Qy]
+
+def PQ_N4(I, P):
+    Px, Py, Qx, Qy = [], [], [], []
+    for p in P:
+        px, py = p
+        for dx, dy in dxdy_N8:
+            qx, qy = px+dx, py+dy
+            if qy < 0 or qy >= I.shape[0] or qx < 0 or qx >= I.shape[1]:
+                continue
+            Px.append(px)
+            Py.append(py)
+            Qx.append(qx)
+            Qy.append(qy)
+    PQ = np.asarray([Px, Py, Qx, Qy])
+    return [Px, Py], [Qx, Qy]
+
 def normalized_gaussian(X, mu, S):
     X = np.asarray(X).astype(np.float64)
     S = np.asarray(S).astype(np.float64)
