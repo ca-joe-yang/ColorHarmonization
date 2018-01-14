@@ -19,8 +19,7 @@ def delta(P, Q):
 
 def PQ_N4(I, P):
     Px, Py, Qx, Qy = [], [], [], []
-    for p in P:
-        px, py = p
+    for px, py in zip(P[0], P[1]):
         for dx, dy in dxdy_N4:
             qx, qy = px+dx, py+dy
             if qy < 0 or qy >= I.shape[0] or qx < 0 or qx >= I.shape[1]:
@@ -33,8 +32,7 @@ def PQ_N4(I, P):
 
 def PQ_N4(I, P):
     Px, Py, Qx, Qy = [], [], [], []
-    for p in P:
-        px, py = p
+    for px, py in zip(P[0], P[1]):
         for dx, dy in dxdy_N8:
             qx, qy = px+dx, py+dy
             if qy < 0 or qy >= I.shape[0] or qx < 0 or qx >= I.shape[1]:
@@ -43,7 +41,6 @@ def PQ_N4(I, P):
             Py.append(py)
             Qx.append(qx)
             Qy.append(qy)
-    PQ = np.asarray([Px, Py, Qx, Qy])
     return [Px, Py], [Qx, Qy]
 
 def normalized_gaussian(X, mu, S):

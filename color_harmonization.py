@@ -3,8 +3,6 @@
 import cv2
 import sys
 import numpy as np
-from scipy.optimize import minimize, rosen, rosen_der
-
 import util
 import importlib
 importlib.reload(util)
@@ -100,7 +98,7 @@ class HarmonicScheme:
         H_dis = H_dis.min(axis=0)
         return H_dis
 
-    def hue_shifted(self, X):
+    def hue_shifted(self, X, num_superpixels=-1):
         Y = X.copy()
         H = X[:, :, 0].astype(np.int32)*2
         
@@ -108,7 +106,34 @@ class HarmonicScheme:
         H_d2b = np.asarray(H_d2b)
         
         H_cls = np.argmin(H_d2b, axis=0)
-        H_d2b = H_d2b.min(axis=0)
+        if num_superpixels != -1:
+            SEEDS = cv2.ximgproc.createSuperpixelSEEDS(X.shape[1], X.shape[0], X.shape[2], num_superpixels, 10)
+            SEEDS.iterate(X, 4)
+            '''
+            contour = SEEDS.getLabelContourMask()
+            for y in range(HSV_image.shape[0]):
+                for x in range(HSV_image.shape[1]):
+                    if contour[y,x] == 255:
+                        color_image[y,x,0] = 255
+                        color_image[y,x,1] = 255
+                        color_image[y,x,2] = 255
+            cv2.imwrite("seeds.jpg", color_image)
+            '''
+            V = np.zeros(H.shape).reshape(-1)
+            N = V.shape[0]
+
+            grid_num = SEEDS.getNumberOfSuperpixels()
+            labels = SEEDS.getLabels()
+            for i in range(grid_num):
+
+                P = [ [], [] ]
+                s = np.average(H_cls[labels==i])
+                print(i, s)
+                if s > 0.5:
+                    s = 1
+                else:
+                    s = 0
+                H_cls[labels==i] = s
 
         H_ctr = np.zeros((H.shape))
         H_wid = np.zeros((H.shape))
@@ -142,15 +167,11 @@ class HarmonicScheme:
         Y[:,:,0] = H_new
         return Y
 
-    def optimize_ETm(self, H):
-        from cvxopt import matrix, solvers
-        V = np.zeros(H.shape).reshape(-1)
-        res = minimize(fun, (2, 0), method='SLSQP', bounds=bnds, constraints=cons)
-
-    def energy_E(self, X, V, p):
+    def energy_E(self, X, V, P):
         w1 = 1.0
         w2 = 1.0
-        return w1 * self.energy_E1(X, V, p) + w2 * self.energy_E2(X, V, p)
+        e = w1 * self.energy_E1(X, V, P)# + w2 * self.energy_E2(X, V, p)
+        return e
 
     def energy_E1(self, X, V, P):
         # Opencv store H as [0, 180) --> [0, 360)
@@ -194,6 +215,7 @@ class HarmonicScheme:
 
 
 def B(X):
+    '''
     F_matrix = np.zeros((M, A))
     for i in range(M):
         m = template_types[i]
@@ -202,11 +224,13 @@ def B(X):
             alpha = 360/A * j
             harmomic_scheme = HarmonicScheme(m, alpha)
             F_matrix[i, j] = harmomic_scheme.harmony_score(X)
-    (best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
-    best_m = template_types[best_m_idx]
+    '''
+    #(best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
+    #best_m = template_types[best_m_idx]
 
-    #best_m = "L"
-    best_alpha = np.argmin(F_matrix[best_m_idx])
+    best_m = "L"
+    best_alpha = 15
+    #best_alpha = np.argmin(F_matrix[best_m_idx])
     #(best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
     #best_m = template_types[best_m_idx]
 
