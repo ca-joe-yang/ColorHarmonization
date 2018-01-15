@@ -128,7 +128,7 @@ class HarmonicScheme:
 
                 P = [ [], [] ]
                 s = np.average(H_cls[labels==i])
-                print(i, s)
+                #print(i, s)
                 if s > 0.5:
                     s = 1
                 else:
@@ -213,9 +213,25 @@ class HarmonicScheme:
         e2 = np.sum(e2)
         return e2
 
+    def update_alpha(self, alpha):
+        self.alpha = alpha
+        self.sectors = []
+        for t in HueTemplates[self.m]:
+            center = t[0] * 360 + alpha
+            width  = t[1] * 360
+            sector = HueSector(center, width)
+            self.sectors.append( sector )
+
+    def update_template(self, m):
+        self.m = m
+        self.sectors = []
+        for t in HueTemplates[m]:
+            center = t[0] * 360 + self.alpha
+            width  = t[1] * 360
+            sector = HueSector(center, width)
+            self.sectors.append( sector )
 
 def B(X):
-    '''
     F_matrix = np.zeros((M, A))
     for i in range(M):
         m = template_types[i]
@@ -224,13 +240,34 @@ def B(X):
             alpha = 360/A * j
             harmomic_scheme = HarmonicScheme(m, alpha)
             F_matrix[i, j] = harmomic_scheme.harmony_score(X)
-    '''
+    (best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
+    best_m = template_types[best_m_idx]
+
+    #best_m = "L"
+    best_alpha = np.argmin(F_matrix[best_m_idx])
     #(best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
     #best_m = template_types[best_m_idx]
 
-    best_m = "L"
-    best_alpha = 15
-    #best_alpha = np.argmin(F_matrix[best_m_idx])
+    best_harmomic_scheme = HarmonicScheme(best_m, best_alpha)
+    return best_harmomic_scheme
+
+def BB(XT):
+    F_matrix = np.zeros((M, A))
+    for i in range(M):
+        m = template_types[i]
+        for j in range(A):
+            print(i,j)
+            alpha = 360/A * j
+            harmomic_scheme = HarmonicScheme(m, alpha)
+
+            for X in XT:
+                F_matrix[i, j] += harmomic_scheme.harmony_score(X)
+
+    (best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
+    best_m = template_types[best_m_idx]
+
+    #best_m = "L"
+    best_alpha = np.argmin(F_matrix[best_m_idx])
     #(best_m_idx, best_alpha) = np.unravel_index( np.argmin(F_matrix), F_matrix.shape )
     #best_m = template_types[best_m_idx]
 
