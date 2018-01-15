@@ -3,6 +3,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 canvas_h = 600
 canvas_w = 600
@@ -13,6 +14,9 @@ H_cycle = 180
 
 dxdy_N4 = [(0,-1), (-1,0), (0,1), (1,0)]
 dxdy_N8 = [(0,-1), (-1,-1), (-1,0), (-1,1), (0,1), (1,1), (1,0), (1,-1)]
+
+button_rows = 2
+button_h = 100
 
 def delta(P, Q):
     return (P != Q).astype(int)
@@ -119,9 +123,72 @@ def draw_harmonic_scheme(harmonic_scheme, canvas):
         #print(center, width)
         start  = (center + width/2)
         end    = (center - width/2)
-        print('a', center, width, start, end)
+        #print('a', center, width, start, end)
         cv2.ellipse(overlay, (yc, xc), (circle_r,circle_r), 0, start, end, (0,0,0), -1)
     return overlay
+
+def draw_harmonic_scheme_border(harmonic_scheme, canvas):
+    overlay = canvas.copy()
+    cv2.circle(overlay, (yc, xc), 25, (0,0,0), -1)
+
+    for sector in harmonic_scheme.sectors:
+        center = sector.center
+        width  = sector.width
+        #print(center, width)
+        start  = (center + width/2)
+        end    = (center - width/2)
+        #print('a', center, width, start, end)
+        cv2.ellipse(overlay, (yc, xc), (circle_r,circle_r), 0, start, end, (0,0,0), 3)
+
+        x1 = xc + int(circle_r * np.sin(np.deg2rad(start)))
+        y1 = yc + int(circle_r * np.cos(np.deg2rad(start)))
+        x2 = xc + int(circle_r * np.sin(np.deg2rad(end)))
+        y2 = yc + int(circle_r * np.cos(np.deg2rad(end)))
+
+        cv2.line(overlay, (yc, xc), (y1,x1), (0,0,1), 3)
+        cv2.line(overlay, (yc, xc), (y2,x2), (0,0,1), 3)
+    return overlay
+
+def draw_buttons(harmonic_scheme, template_types, canvas):
+    buttons_canvas = cv2.copyMakeBorder(canvas, 0, button_h * button_rows, 0, 0, cv2.BORDER_CONSTANT, value=[0,0,0])
+
+    cursor_x = -int(button_h / 2)
+    circle_r_tmp = button_h - 50
+
+    yc_tmp = canvas_h + int(button_h / 2)
+
+    for index, template_type in enumerate(template_types):
+        harmonic_scheme.update_template(template_type)
+
+        xc_tmp = cursor_x + button_h
+
+        cv2.circle(buttons_canvas, (xc_tmp, yc_tmp), circle_r_tmp, (255,255,255), -1)
+
+        for sector in harmonic_scheme.sectors:
+            center = sector.center
+            width  = sector.width
+
+            start  = (center + width/2)
+            end    = (center - width/2)
+
+            cv2.ellipse(buttons_canvas, (xc_tmp, yc_tmp), (circle_r_tmp,circle_r_tmp), 0, start, end, (128,128,128), -1)
+            #cv2.ellipse(buttons_canvas, (xc_tmp, yc_tmp), (circle_r_tmp,circle_r_tmp), 0, start, end, (0,0,0), 3)
+
+            x1 = xc_tmp + int(circle_r_tmp * np.sin(np.deg2rad(start)))
+            y1 = yc_tmp + int(circle_r_tmp * np.cos(np.deg2rad(start)))
+            x2 = xc_tmp + int(circle_r_tmp * np.sin(np.deg2rad(end)))
+            y2 = yc_tmp + int(circle_r_tmp * np.cos(np.deg2rad(end)))
+
+            #cv2.line(buttons_canvas, (xc_tmp, yc_tmp), (x1,y1), (0,0,1), 3)
+            #cv2.line(buttons_canvas, (xc_tmp, yc_tmp), (x2,y2), (0,0,1), 3)
+
+        cursor_x += button_h
+
+        if index + 1 == int(len(template_types) / button_rows):
+            yc_tmp += button_h 
+            cursor_x = -int(button_h / 2)
+
+    return buttons_canvas
 
 def length(v):
     return math.sqrt(v[0]**2+v[1]**2)
@@ -134,6 +201,7 @@ def determinant(v,w):
 
 def inner_angle(v,w):
    cosx=dot_product(v,w)/(length(v)*length(w))
+   cosx = min(max(cosx,-1),1)
    rad=math.acos(cosx) # in radians
    return rad*180/math.pi # returns degrees
    
@@ -144,3 +212,6 @@ def angle_clockwise(A, B):
         return inner
     else: # if the det > 0 then A is immediately clockwise of B
         return 360-inner
+
+def crunks(l, n, a):
+    return [l[i:i + n + a]for i in range(0 , len(l), n) ]
