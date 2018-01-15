@@ -101,6 +101,7 @@ class HarmonicScheme:
     def hue_shifted(self, X, num_superpixels=-1):
         Y = X.copy()
         H = X[:, :, 0].astype(np.int32)*2
+        S = X[:, :, 1].astype(np.float32) / 255.0
         
         H_d2b = [ sector.distance_to_border(H) for sector in self.sectors ]
         H_d2b = np.asarray(H_d2b)
@@ -109,6 +110,7 @@ class HarmonicScheme:
         if num_superpixels != -1:
             SEEDS = cv2.ximgproc.createSuperpixelSEEDS(X.shape[1], X.shape[0], X.shape[2], num_superpixels, 10)
             SEEDS.iterate(X, 4)
+
             '''
             contour = SEEDS.getLabelContourMask()
             for y in range(HSV_image.shape[0]):
@@ -122,8 +124,35 @@ class HarmonicScheme:
             V = np.zeros(H.shape).reshape(-1)
             N = V.shape[0]
 
+            H_ctr = np.zeros((H.shape))
             grid_num = SEEDS.getNumberOfSuperpixels()
             labels = SEEDS.getLabels()
+            '''
+            for l in range(grid_num):
+
+                e = np.zeros(len(self.sectors))
+
+                H_P = H[labels==l]
+                S_P = S[labels==l]
+                
+                H_V_P = H_P.copy()
+                for i in range(len(self.sectors)):
+                    sector = self.sectors[i]
+                    mask = (H_cls == i)
+                    H_ctr[mask] = sector.center
+                    H_V_P = H_ctr[labels==l]
+                
+
+                    d = util.deg_distance(H_P, H_V_P)
+        
+                    tmp = np.multiply(d, s)
+                    e[i] = np.sum(tmp)
+                
+                if e[0] < e[1]:
+                    H_cls[labels==i] = 0
+                else:
+                    H_cls[labels==i] = s
+            '''
             for i in range(grid_num):
 
                 P = [ [], [] ]
