@@ -4,7 +4,7 @@ ColorHarmonization
 # Introduction
 - this is a simplier python3 implementation of the paper [Color Harmonization](https://igl.ethz.ch/projects/color-harmonization/harmonization.pdf)
 
-# How to run?
+# Usage
 ## With gui
 ```bash
 python3 gui.py <INPUT_IMAGE>
@@ -14,3 +14,4 @@ python3 gui.py <INPUT_IMAGE>
 ```bash
 python3 main.py <INPUT_IMAGE>
 ```
+
