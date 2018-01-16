@@ -1,3 +1,16 @@
-# ColorHarmonization
+ColorHarmonization
+===
 
-- this is a python implementation of [Color Harmonization](https://igl.ethz.ch/projects/color-harmonization/harmonization.pdf)
+# Introduction
+- this is a simplier python3 implementation of the paper [Color Harmonization](https://igl.ethz.ch/projects/color-harmonization/harmonization.pdf)
+
+# How to run?
+## With gui
+```bash
+python3 gui.py <INPUT_IMAGE>
+```
+
+## Without gui
+```bash
+python3 main.py <INPUT_IMAGE>
+```
