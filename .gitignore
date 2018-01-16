@@ -3,3 +3,5 @@ __pycache__/
 *.jpg
 *.png
 *.mp4
+*.docx
+*.pages
